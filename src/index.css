@@ -1,0 +1,86 @@
+@import url('https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,700&family=Nunito+Sans:ital,wght@0,400;0,700;1,400&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --primary: #4a7c59;
+  --on-primary: #ffffff;
+  --primary-container: #78a886;
+  --on-primary-container: #d8f0de;
+  
+  --secondary: #6b6358;
+  --on-secondary: #ffffff;
+  --secondary-container: #f0e8db;
+  
+  --tertiary: #705c30;
+  --on-tertiary: #ffffff;
+  --tertiary-container: #c4a66a;
+  
+  --background: #faf6f0;
+  --on-background: #2e3230;
+  
+  --surface: #faf6f0;
+  --on-surface: #2e3230;
+  --on-surface-variant: #4a4e4a;
+  --surface-container: #f0ece4;
+  --surface-container-high: #eae6de;
+  --surface-container-highest: #e4e0d8;
+  
+  --error: #b83230;
+  --on-error: #ffffff;
+  
+  --outline: #74796e;
+  --outline-variant: #c4c8bc;
+}
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    @apply bg-background text-on-background font-sans antialiased;
+    line-height: 1.625;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif font-bold text-on-background;
+    line-height: 1.2;
+  }
+
+  /* Form defaults matching Stitch */
+  input, textarea, select {
+    @apply transition-all duration-200 border-[#c4c8bc]/40 bg-surface focus:ring-2 focus:ring-primary/20 focus:border-primary/40 focus:outline-none;
+  }
+
+  /* Scrollbar styling for organic feel */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-background;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-outline-variant/50 rounded-full hover:bg-outline-variant;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-6 py-3 bg-primary text-on-primary font-bold rounded-terra shadow-terra hover:bg-primary/90 hover:shadow-terra-md transition-all active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+  }
+  
+  .btn-secondary {
+    @apply px-6 py-3 bg-surface-container border border-outline-variant/30 text-primary font-bold rounded-terra hover:bg-surface-container-high transition-all active:scale-[0.98] disabled:opacity-50;
+  }
+
+  .card-terra {
+    @apply bg-surface rounded-terra-lg border border-outline-variant/20 shadow-terra overflow-hidden;
+  }
+
+  .input-label {
+    @apply block text-xs uppercase tracking-widest font-bold text-on-surface-variant/60 mb-2 px-1;
+  }
+}
