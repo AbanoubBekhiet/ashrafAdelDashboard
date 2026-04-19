@@ -44,7 +44,6 @@ export default function ProjectEditor() {
         .from('project_images')
         .select('*')
         .eq('project_id', id)
-        .order('display_order', { ascending: true })
 
       if (iError) throw iError
 
@@ -66,7 +65,6 @@ export default function ProjectEditor() {
           preview: null,
           currentUrl: img.image_url,
           explanation: img.explanation || '',
-          display_order: img.display_order || 0
         })))
       }
     } catch (error) {
@@ -98,7 +96,6 @@ export default function ProjectEditor() {
       preview: URL.createObjectURL(file),
       currentUrl: '',
       explanation: '',
-      display_order: galleryImages.length + index
     }))
     setGalleryImages(prev => [...prev, ...newImages])
   }
@@ -184,7 +181,6 @@ export default function ProjectEditor() {
           project_id: projectId,
           image_url: url,
           explanation: img.explanation,
-          display_order: img.display_order
         })
       }
 

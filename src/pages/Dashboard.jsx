@@ -57,9 +57,44 @@ export default function Dashboard() {
     if (!window.confirm('Are you sure you want to delete this project?')) return;
     
     try {
+      const { data: project } = await supabase.from('projects').select('main_image_url').eq('id', id).single()
+      const { data: gallery } = await supabase.from('project_images').select('image_url').eq('project_id', id)
+
+      const pathsToRemove = []
+
+      const extractPath = (url) => {
+        if (!url) return null
+        try {
+          const urlObj = new URL(url)
+          const parts = urlObj.pathname.split('/portfolio-assets/')
+          if (parts.length > 1) return decodeURIComponent(parts[1])
+        } catch (err) {
+          if (url.includes('/portfolio-assets/')) {
+            return decodeURIComponent(url.split('/portfolio-assets/')[1])
+          }
+        }
+        return null
+      }
+
+      const mainPath = extractPath(project?.main_image_url)
+      if (mainPath) pathsToRemove.push(mainPath)
+
+      if (gallery) {
+        gallery.forEach(img => {
+          const path = extractPath(img.image_url)
+          if (path) pathsToRemove.push(path)
+        })
+      }
+
       const { error } = await supabase.from('projects').delete().eq('id', id)
       if (error) throw error
+      
       setProjects(prev => prev.filter(p => p.id !== id))
+
+      if (pathsToRemove.length > 0) {
+        const { error: storageError } = await supabase.storage.from('portfolio-assets').remove(pathsToRemove)
+        if (storageError) console.error('Error removing images from storage:', storageError.message)
+      }
     } catch (err) {
        console.error('Error deleting project:', err.message)
     }
@@ -154,7 +189,7 @@ export default function Dashboard() {
         </div>
 
         {/* Data Table */}
-        <div className="bg-[#fcfaf7] rounded-terra-xl shadow-sm border border-outline-variant/20 overflow-hidden max-w-5xl mx-auto">
+        <div className="bg-[#fcfaf7] rounded-terra-xl shadow-sm border border-outline-variant/20 overflow-x-auto max-w-5xl mx-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
                <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary/20 border-t-primary"></div>
