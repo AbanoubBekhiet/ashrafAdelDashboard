@@ -8,6 +8,7 @@ export default function ProjectEditor() {
   const [loading, setLoading] = useState(false)
   const [fetching, setFetching] = useState(!!id)
   const [error, setError] = useState(null)
+  const [categories, setCategories] = useState([])
   
   const [formData, setFormData] = useState({
     title: '',
@@ -15,6 +16,8 @@ export default function ProjectEditor() {
     github: '',
     tags: '',
     visibility: 'public',
+    category_id: '',
+    live_link: '',
   })
 
   const [mainImage, setMainImage] = useState({ file: null, preview: null, currentUrl: '' })
@@ -24,10 +27,25 @@ export default function ProjectEditor() {
   const galleryInputRef = useRef(null)
 
   useEffect(() => {
+    fetchCategories()
     if (id) {
       fetchProject()
     }
   }, [id])
+
+  async function fetchCategories() {
+    try {
+      const { data, error } = await supabase
+        .from('categories')
+        .select('*')
+        .order('name')
+
+      if (error) throw error
+      setCategories(data || [])
+    } catch (err) {
+      console.error('Error fetching categories:', err.message)
+    }
+  }
 
   async function fetchProject() {
     try {
@@ -54,6 +72,8 @@ export default function ProjectEditor() {
           github: project.github || '',
           tags: project.tags ? project.tags.join(', ') : '',
           visibility: project.visibility || 'public',
+          category_id: project.category_id || '',
+          live_link: project.live_link || '',
         })
         setMainImage({ file: null, preview: null, currentUrl: project.main_image_url || '' })
       }
@@ -144,6 +164,8 @@ export default function ProjectEditor() {
         tags: formData.tags.split(',').map(tag => tag.trim()).filter(tag => tag !== ''),
         main_image_url: mainImageUrl,
         visibility: formData.visibility,
+        category_id: formData.category_id || null,
+        live_link: formData.live_link || null,
       }
 
       let projectId = id
@@ -359,7 +381,7 @@ export default function ProjectEditor() {
              </div>
 
               <div className="card-terra p-8 space-y-8">
-                <div className="space-y-2">
+<div className="space-y-2">
                    <label className="input-label">Project Visibility</label>
                    <select
                       name="visibility"
@@ -370,7 +392,22 @@ export default function ProjectEditor() {
                      <option value="public">Public</option>
                      <option value="private">Private</option>
                    </select>
-                </div>
+                 </div>
+
+                 <div className="space-y-2">
+                   <label className="input-label">Category</label>
+                   <select
+                      name="category_id"
+                      value={formData.category_id}
+                      onChange={handleChange}
+                      className="block w-full px-4 py-3 bg-surface-container border border-outline-variant/10 rounded-terra text-sm text-on-background focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all shadow-inner"
+                   >
+                     <option value="">Select category...</option>
+                     {categories.map(cat => (
+                       <option key={cat.id} value={cat.id}>{cat.name}</option>
+                     ))}
+                   </select>
+                 </div>
 
                 <div className="space-y-2">
                    <label className="input-label">Core Technologies</label>
@@ -383,7 +420,7 @@ export default function ProjectEditor() {
                    />
                 </div>
 
-                <div className="space-y-2">
+<div className="space-y-2">
                    <label className="input-label">Source Link (GitHub)</label>
                    <input
                       name="github"
@@ -392,8 +429,19 @@ export default function ProjectEditor() {
                       placeholder="https://github.com/archive"
                       className="block w-full px-4 py-3 bg-surface-container border border-outline-variant/10 rounded-terra text-sm text-on-background focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all placeholder-on-surface-variant/20 shadow-inner"
                    />
-                </div>
-             </div>
+                 </div>
+
+                 <div className="space-y-2">
+                   <label className="input-label">Live Link (Optional)</label>
+                   <input
+                      name="live_link"
+                      value={formData.live_link}
+                      onChange={handleChange}
+                      placeholder="https://your-project.vercel.app"
+                      className="block w-full px-4 py-3 bg-surface-container border border-outline-variant/10 rounded-terra text-sm text-on-background focus:ring-1 focus:ring-primary/40 focus:outline-none transition-all placeholder-on-surface-variant/20 shadow-inner"
+                   />
+                 </div>
+              </div>
 
              {error && (
                 <div className="bg-error/5 border border-error/20 text-error text-[10px] p-5 rounded-terra font-bold uppercase tracking-widest leading-relaxed animate-in shake duration-500">

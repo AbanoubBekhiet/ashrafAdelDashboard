@@ -1,15 +1,45 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '../lib/supabaseClient'
 import { Link, useNavigate } from 'react-router-dom'
 
 export default function Dashboard() {
   const [projects, setProjects] = useState([])
   const [loading, setLoading] = useState(true)
+  const [cvUrl, setCvUrl] = useState(null)
+  const [cvLoading, setCvLoading] = useState(true)
+  const [cvUploading, setCvUploading] = useState(false)
+  const fileInputRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchProjects()
+    fetchUserCv()
   }, [])
+
+  async function fetchUserCv() {
+    try {
+      setCvLoading(true)
+      const { data, error } = await supabase
+        .from('user_cv')
+        .select('*')
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // No rows returned - table is empty
+          setCvUrl(null)
+        } else {
+          console.error('Error fetching CV:', error.message)
+        }
+      } else if (data) {
+        setCvUrl(data.cv_url)
+      }
+    } catch (err) {
+      console.error('Error fetching CV:', err.message)
+    } finally {
+      setCvLoading(false)
+    }
+  }
 
   async function fetchProjects() {
     try {
@@ -51,6 +81,20 @@ export default function Dashboard() {
     }
   }
 
+  const extractPath = (url) => {
+    if (!url) return null
+    try {
+      const urlObj = new URL(url)
+      const parts = urlObj.pathname.split('/portfolio-assets/')
+      if (parts.length > 1) return decodeURIComponent(parts[1])
+    } catch {
+      if (url.includes('/portfolio-assets/')) {
+        return decodeURIComponent(url.split('/portfolio-assets/')[1])
+      }
+    }
+    return null
+  }
+
   const handleDelete = async (e, id) => {
     e.preventDefault()
     e.stopPropagation()
@@ -61,20 +105,6 @@ export default function Dashboard() {
       const { data: gallery } = await supabase.from('project_images').select('image_url').eq('project_id', id)
 
       const pathsToRemove = []
-
-      const extractPath = (url) => {
-        if (!url) return null
-        try {
-          const urlObj = new URL(url)
-          const parts = urlObj.pathname.split('/portfolio-assets/')
-          if (parts.length > 1) return decodeURIComponent(parts[1])
-        } catch (err) {
-          if (url.includes('/portfolio-assets/')) {
-            return decodeURIComponent(url.split('/portfolio-assets/')[1])
-          }
-        }
-        return null
-      }
 
       const mainPath = extractPath(project?.main_image_url)
       if (mainPath) pathsToRemove.push(mainPath)
@@ -96,11 +126,127 @@ export default function Dashboard() {
         if (storageError) console.error('Error removing images from storage:', storageError.message)
       }
     } catch (err) {
-       console.error('Error deleting project:', err.message)
+      console.error('Error deleting project:', err.message)
     }
   }
 
-  // Calculate some mock or derived stats
+  const handleCvUpload = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const allowedTypes = ['application/pdf']
+    if (!allowedTypes.includes(file.type)) {
+      alert('Please upload a PDF file')
+      return
+    }
+
+    setCvUploading(true)
+    try {
+      // Get existing CV record
+      const { data: existingRow } = await supabase
+        .from('user_cv')
+        .select('id, cv_url')
+        .single()
+
+      // Delete old file if exists
+      if (existingRow?.cv_url) {
+        const oldPath = extractPath(existingRow.cv_url)
+        if (oldPath) {
+          await supabase.storage.from('portfolio-assets').remove([oldPath])
+        }
+      }
+
+      // Upload with unique filename
+      const timestamp = Date.now()
+      const fileName = `cv/${timestamp}_cv.pdf`
+
+      const { error: uploadError } = await supabase.storage
+        .from('portfolio-assets')
+        .upload(fileName, file)
+
+      if (uploadError) {
+        console.error('Upload error:', uploadError.message)
+        throw uploadError
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('portfolio-assets')
+        .getPublicUrl(fileName)
+
+      // Update or insert in DB
+      if (existingRow?.id) {
+        const { error: updateError } = await supabase
+          .from('user_cv')
+          .update({
+            cv_url: publicUrl,
+            file_name: file.name,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingRow.id)
+        
+        if (updateError) throw updateError
+        setCvUrl(publicUrl)
+      } else {
+        // Insert new row
+        const { error: insertError } = await supabase
+          .from('user_cv')
+          .insert({
+            cv_url: publicUrl,
+            file_name: file.name,
+          })
+        
+        if (insertError) throw insertError
+        await fetchUserCv()
+      }
+    } catch (err) {
+      console.error('Error uploading CV:', err.message)
+      alert('Error uploading CV: ' + err.message)
+    } finally {
+      setCvUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleCvDelete = async () => {
+    if (!window.confirm('Are you sure you want to delete your CV?')) return
+
+    setCvUploading(true)
+    try {
+      // Get existing CV
+      const { data: currentCv } = await supabase
+        .from('user_cv')
+        .select('id, cv_url')
+        .single()
+
+      if (!currentCv) {
+        console.log('No CV to delete')
+        setCvUploading(false)
+        return
+      }
+
+      // Delete from storage
+      if (currentCv?.cv_url) {
+        const path = extractPath(currentCv.cv_url)
+        if (path) {
+          await supabase.storage.from('portfolio-assets').remove([path])
+        }
+      }
+
+      // Delete from DB
+      if (currentCv?.id) {
+        await supabase.from('user_cv').delete().eq('id', currentCv.id)
+      }
+
+      setCvUrl(null)
+    } catch (err) {
+      console.error('Error deleting CV:', err.message)
+    } finally {
+      setCvUploading(false)
+    }
+  }
+
   const totalViews = "124.8k"
   const topProject = projects.length > 0 ? projects[0].title : "N/A"
   const activeDrafts = projects.filter(p => p.visibility === 'private').length
@@ -112,7 +258,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background flex flex-col font-sans mb-10">
       
-      {/* Navigation */}
       <nav className="bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 sticky top-0 z-20 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 lg:px-12">
           <div className="flex justify-between h-20 items-center">
@@ -132,6 +277,66 @@ export default function Dashboard() {
                 </svg>
                 <span>Compose Project</span>
               </Link>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleCvUpload}
+                accept="application/pdf"
+                className="hidden"
+              />
+              {!cvLoading && (
+                cvUrl ? (
+                  <div className="flex items-center gap-3">
+                    <a
+                      href={cvUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      disabled={cvUploading}
+                      className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-2"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      View CV
+                    </a>
+                    <button
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={cvUploading}
+                      className="text-xs font-bold uppercase tracking-widest transition-all p-2 flex items-center gap-2 text-on-surface-variant hover:text-primary disabled:opacity-50"
+                      title="Re-upload CV"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={handleCvDelete}
+                      disabled={cvUploading}
+                      className="text-on-surface-variant hover:text-error text-xs font-bold uppercase tracking-widest transition-all p-2 flex items-center gap-2 disabled:opacity-50"
+                      title="Delete CV"
+                    >
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={cvUploading}
+                    className="text-on-surface-variant hover:text-primary text-xs font-bold uppercase tracking-widest transition-all p-2 flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {cvUploading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-primary/20 border-t-primary" />
+                    ) : (
+                      <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    )}
+                    {cvUploading ? 'Uploading...' : 'Upload CV'}
+                  </button>
+                )
+              )}
               <button
                 onClick={handleLogout}
                 className="text-on-surface-variant hover:text-error text-xs font-bold uppercase tracking-widest transition-all p-2 flex items-center gap-2"
@@ -144,10 +349,8 @@ export default function Dashboard() {
         </div>
       </nav>
 
-      {/* Main Content Area */}
       <main className="w-full flex-1 p-6 mt-6 lg:p-14 bg-background">
         
-        {/* Header */}
         <div className="flex justify-between items-end mb-10 max-w-5xl mx-auto">
           <div>
             <h2 className="text-4xl font-serif font-bold text-on-background tracking-tight">Project Inventory</h2>
@@ -155,7 +358,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 max-w-5xl mx-auto">
           <div className="bg-surface-container rounded-terra-xl p-6 flex items-center gap-5 border border-outline-variant/10 shadow-sm">
             <div className="h-14 w-14 rounded-full bg-primary/20 text-primary flex items-center justify-center shrink-0">
@@ -188,7 +390,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Data Table */}
         <div className="bg-[#fcfaf7] rounded-terra-xl shadow-sm border border-outline-variant/20 overflow-x-auto max-w-5xl mx-auto">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-24 gap-4">
@@ -249,7 +450,7 @@ export default function Dashboard() {
                             ? 'bg-outline-variant/20 text-on-surface-variant/80 border-transparent hover:bg-outline-variant/40'
                             : 'bg-primary/20 text-primary border-transparent hover:bg-primary/30'
                         }`}
-                      >
+                       >
                        {project.visibility === 'private' ? 'Private' : 'Public'}
                       </button>
                     </td>
@@ -269,7 +470,6 @@ export default function Dashboard() {
             </table>
           )}
           
-          {/* Pagination Footer */}
           <div className="bg-white border-t border-outline-variant/10 px-8 py-5 flex items-center justify-between">
             <span className="text-[13px] text-on-surface-variant/70 tracking-wide">
               Showing 1-{projects.length} of {projects.length} projects
