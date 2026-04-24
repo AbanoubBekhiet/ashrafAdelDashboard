@@ -259,23 +259,23 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background flex flex-col font-sans mb-10">
       
       <nav className="bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 sticky top-0 z-20 transition-all duration-300">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-4">
-              <div className="h-10 w-10 bg-primary rounded-terra flex items-center justify-center shadow-terra rotate-3">
-                <span className="text-on-primary font-serif font-bold text-lg">A</span>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="flex justify-between h-16 sm:h-20 items-center">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary rounded-terra flex items-center justify-center shadow-terra rotate-3">
+                <span className="text-on-primary font-serif font-bold text-base sm:text-lg">A</span>
               </div>
-              <h1 className="text-2xl font-serif font-bold text-on-background tracking-tight">Studio Admin</h1>
+              <h1 className="text-lg sm:text-2xl font-serif font-bold text-on-background tracking-tight hidden sm:block">Studio Admin</h1>
             </div>
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3 sm:gap-6">
               <Link
                 to="/edit-project"
-                className="btn-primary py-2.5 flex items-center gap-2 group shadow-terra"
+                className="btn-primary py-2 px-3 sm:py-2.5 sm:px-4 flex items-center gap-2 group shadow-terra"
               >
                 <svg className="h-4 w-4 stroke-[2.5]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Compose Project</span>
+                <span className="hidden sm:inline">Compose Project</span>
               </Link>
               <input
                 type="file"
@@ -286,18 +286,19 @@ export default function Dashboard() {
               />
               {!cvLoading && (
                 cvUrl ? (
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1 sm:gap-3">
                     <a
                       href={cvUrl}
                       target="_blank"
                       rel="noopener noreferrer"
                       disabled={cvUploading}
-                      className="text-primary hover:text-primary/80 text-sm font-medium flex items-center gap-2"
+                      className="text-primary hover:text-primary/80 p-2 sm:p-0 text-xs sm:text-sm font-medium flex items-center gap-1 sm:gap-2"
+                      title="View CV"
                     >
                       <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
-                      View CV
+                      <span className="hidden sm:inline">View CV</span>
                     </a>
                     <button
                       onClick={() => fileInputRef.current?.click()}
@@ -333,16 +334,17 @@ export default function Dashboard() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                       </svg>
                     )}
-                    {cvUploading ? 'Uploading...' : 'Upload CV'}
+                    <span className="hidden sm:inline">{cvUploading ? 'Uploading...' : 'Upload CV'}</span>
                   </button>
                 )
               )}
               <button
                 onClick={handleLogout}
                 className="text-on-surface-variant hover:text-error text-xs font-bold uppercase tracking-widest transition-all p-2 flex items-center gap-2"
+                title="Logout"
               >
                 <svg className="w-4 h-4 opacity-70" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
-                Logout
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </div>
           </div>

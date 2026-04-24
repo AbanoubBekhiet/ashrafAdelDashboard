@@ -234,28 +234,28 @@ export default function ProjectEditor() {
   return (
     <div className="min-h-screen bg-background pb-32">
       <nav className="bg-surface-container/60 backdrop-blur-xl border-b border-outline-variant/20 sticky top-0 z-30 transition-all duration-300">
-        <div className="max-w-6xl mx-auto px-6 lg:px-12">
-          <div className="flex justify-between h-20 items-center">
-            <div className="flex items-center gap-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="flex justify-between h-16 sm:h-20 items-center">
+            <div className="flex items-center gap-3 sm:gap-6">
               <Link to="/" className="text-on-surface-variant hover:text-primary transition-all p-2 rounded-full hover:bg-primary/5">
                 <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
                 </svg>
               </Link>
-              <div className="h-6 w-[1px] bg-outline-variant/40"></div>
-              <h1 className="text-xl font-serif font-bold text-on-background tracking-tight">
+              <div className="hidden sm:block h-6 w-[1px] bg-outline-variant/40"></div>
+              <h1 className="text-base sm:text-xl font-serif font-bold text-on-background tracking-tight truncate max-w-[150px] sm:max-w-none">
                 {id ? 'Refining Record' : 'Initial Composition'}
               </h1>
             </div>
-            <div className="flex items-center gap-4">
-               <Link to="/" className="text-xs font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-background transition-all px-4 py-2">
+            <div className="flex items-center gap-2 sm:gap-4 flex-shrink-0">
+               <Link to="/" className="text-[10px] sm:text-xs font-bold uppercase tracking-widest text-on-surface-variant hover:text-on-background transition-all px-2 sm:px-4 py-2">
                 Discard
                </Link>
                <button
                 type="submit"
                 form="project-form"
                 disabled={loading}
-                className="btn-primary shadow-terra-md px-10"
+                className="btn-primary shadow-terra-md px-4 sm:px-10 py-2 sm:py-2.5 text-xs sm:text-sm"
               >
                 {loading ? 'Publishing...' : 'Commit Changes'}
               </button>
