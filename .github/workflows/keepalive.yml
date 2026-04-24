@@ -1,0 +1,28 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    # Runs every 3 days at 00:00 UTC (safer than exactly 5 days to ensure no interruptions)
+    - cron: '0 0 */3 * *'
+  workflow_dispatch: # Allows you to manually trigger the request from the Actions tab
+
+jobs:
+  ping-supabase:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST API
+        run: |
+          echo "Pinging Supabase REST API to keep the project active..."
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "apikey: sb_publishable_h5nrsRDizaIItn57DiQhUw_XT9C28jS" \
+            -H "Authorization: Bearer sb_publishable_h5nrsRDizaIItn57DiQhUw_XT9C28jS" \
+            "https://qxpzlrhrxyyfwqldssvk.supabase.co/rest/v1/projects?limit=1")
+          
+          echo "Response HTTP Status: $HTTP_STATUS"
+          
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 400 ]; then
+            echo "Success! Supabase has been properly pinged."
+          else
+            echo "Failed to ping Supabase correctly."
+            exit 1
+          fi
