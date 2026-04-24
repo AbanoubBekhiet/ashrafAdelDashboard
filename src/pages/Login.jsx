@@ -64,9 +64,6 @@ export default function Login() {
                 <label htmlFor="password" className="input-label">
                   Password
                 </label>
-                <Link to="/forgot-password" title="Recover your password" className="text-xs font-bold text-primary hover:opacity-70 transition-opacity">
-                  Recovery access?
-                </Link>
               </div>
               <input
                 id="password"
