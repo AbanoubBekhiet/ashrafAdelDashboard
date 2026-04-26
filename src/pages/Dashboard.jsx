@@ -8,13 +8,29 @@ export default function Dashboard() {
   const [cvUrl, setCvUrl] = useState(null)
   const [cvLoading, setCvLoading] = useState(true)
   const [cvUploading, setCvUploading] = useState(false)
+  const [profileUrl, setProfileUrl] = useState(null)
   const fileInputRef = useRef(null)
   const navigate = useNavigate()
 
   useEffect(() => {
     fetchProjects()
     fetchUserCv()
+    fetchProfileImage()
   }, [])
+
+  async function fetchProfileImage() {
+    try {
+      const { data, error } = await supabase
+        .from('portfolio_images')
+        .select('full_url')
+        .eq('folder_name', 'profile')
+        .maybeSingle()
+      
+      if (data) setProfileUrl(data.full_url)
+    } catch (err) {
+      console.error('Error fetching profile image:', err)
+    }
+  }
 
   async function fetchUserCv() {
     try {
@@ -260,10 +276,14 @@ export default function Dashboard() {
       
       <nav className="bg-surface/80 backdrop-blur-md border-b border-outline-variant/20 sticky top-0 z-20 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
-          <div className="flex justify-between h-16 sm:h-20 items-center">
+          <div className="flex justify-between h-16 sm:h-20 items-center ">
             <div className="flex items-center gap-3 sm:gap-4">
-              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary rounded-terra flex items-center justify-center shadow-terra rotate-3">
-                <span className="text-on-primary font-serif font-bold text-base sm:text-lg">A</span>
+              <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary rounded-terra flex items-center justify-center shadow-terra overflow-hidden">
+                {profileUrl ? (
+                  <img src={profileUrl} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-on-primary font-serif font-bold text-base sm:text-lg">A</span>
+                )}
               </div>
               <h1 className="text-lg sm:text-2xl font-serif font-bold text-on-background tracking-tight hidden sm:block">Ashraf Admin</h1>
             </div>
@@ -350,6 +370,70 @@ export default function Dashboard() {
           </div>
         </div>
       </nav>
+
+      {/* Management Toolbar */}
+      <div className="bg-surface-container/30 border-b border-outline-variant/10 py-3 sm:py-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-12">
+          <div className="flex flex-wrap items-center gap-4 sm:gap-10 justify-center sm:justify-start">
+            <Link to="/settings" className="flex items-center gap-2 group transition-all">
+              <div className="p-2 bg-surface rounded-terra-sm border border-outline-variant/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-all shadow-sm">
+                <svg className="w-5 h-5 text-on-surface-variant group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 group-hover:text-on-background transition-colors">profile image</span>
+            </Link>
+
+            <Link to="/categories" className="flex items-center gap-2 group transition-all">
+              <div className="p-2 bg-surface rounded-terra-sm border border-outline-variant/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-all shadow-sm">
+                <svg className="w-5 h-5 text-on-surface-variant group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 group-hover:text-on-background transition-colors">Categories</span>
+            </Link>
+
+            <Link to="/experiences" className="flex items-center gap-2 group transition-all">
+              <div className="p-2 bg-surface rounded-terra-sm border border-outline-variant/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-all shadow-sm">
+                <svg className="w-5 h-5 text-on-surface-variant group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 group-hover:text-on-background transition-colors">Experiences</span>
+            </Link>
+
+            <Link to="/education" className="flex items-center gap-2 group transition-all">
+              <div className="p-2 bg-surface rounded-terra-sm border border-outline-variant/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-all shadow-sm">
+                <svg className="w-5 h-5 text-on-surface-variant group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path d="M12 14l9-5-9-5-9 5 9 5z" />
+                  <path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 group-hover:text-on-background transition-colors">Education</span>
+            </Link>
+
+            <Link to="/skills" className="flex items-center gap-2 group transition-all">
+              <div className="p-2 bg-surface rounded-terra-sm border border-outline-variant/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-all shadow-sm">
+                <svg className="w-5 h-5 text-on-surface-variant group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 group-hover:text-on-background transition-colors">Skills</span>
+            </Link>
+
+            <Link to="/location" className="flex items-center gap-2 group transition-all">
+              <div className="p-2 bg-surface rounded-terra-sm border border-outline-variant/10 group-hover:border-primary/30 group-hover:bg-primary/5 transition-all shadow-sm">
+                <svg className="w-5 h-5 text-on-surface-variant group-hover:text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant/60 group-hover:text-on-background transition-colors">Location</span>
+            </Link>
+          </div>
+        </div>
+      </div>
 
       <main className="w-full flex-1 p-6 mt-6 lg:p-14 bg-background">
         
@@ -485,7 +569,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-
       </main>
     </div>
   )
