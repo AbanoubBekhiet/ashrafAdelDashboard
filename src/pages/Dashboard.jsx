@@ -265,7 +265,7 @@ export default function Dashboard() {
               <div className="h-8 w-8 sm:h-10 sm:w-10 bg-primary rounded-terra flex items-center justify-center shadow-terra rotate-3">
                 <span className="text-on-primary font-serif font-bold text-base sm:text-lg">A</span>
               </div>
-              <h1 className="text-lg sm:text-2xl font-serif font-bold text-on-background tracking-tight hidden sm:block">Studio Admin</h1>
+              <h1 className="text-lg sm:text-2xl font-serif font-bold text-on-background tracking-tight hidden sm:block">Ashraf Admin</h1>
             </div>
             <div className="flex items-center gap-3 sm:gap-6">
               <Link
@@ -355,7 +355,7 @@ export default function Dashboard() {
         
         <div className="flex justify-between items-end mb-10 max-w-5xl mx-auto">
           <div>
-            <h2 className="text-4xl font-serif font-bold text-on-background tracking-tight">Project Inventory</h2>
+            <h2 className="text-4xl font-serif font-bold text-on-background tracking-tight">Projects Inventory</h2>
             <p className="text-on-surface-variant mt-2 text-sm tracking-wide">Manage and monitor your organic data initiatives.</p>
           </div>
         </div>
