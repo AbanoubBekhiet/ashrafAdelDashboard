@@ -70,12 +70,15 @@ export default function EducationManager() {
       const record = { ...formData, user_id: user.id, updated_at: new Date().toISOString() }
 
       if (education) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('education')
           .update(record)
           .eq('id', education.id)
+          .select()
+          .single()
         
         if (error) throw error
+        setEducation(data)
       } else {
         const { data, error } = await supabase
           .from('education')

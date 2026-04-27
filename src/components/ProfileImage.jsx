@@ -18,10 +18,11 @@ export default function ProfileImage({ onUpdate }) {
         .from('portfolio_images')
         .select('*')
         .eq('folder_name', 'profile')
-        .maybeSingle()
-
+        .order('created_at', { ascending: false })
+      
       if (error) throw error
-      setProfile(data)
+      // Take the most recent one if multiples exist
+      setProfile(data && data.length > 0 ? data[0] : null)
     } catch (error) {
       console.error('Error fetching profile image:', error.message)
     } finally {
@@ -58,42 +59,39 @@ export default function ProfileImage({ onUpdate }) {
         .from('portfolio-assets')
         .getPublicUrl(fileName)
 
-      const oldPath = profile?.storage_path
+      // Get ALL existing profile records for cleanup
+      const { data: existingRecords } = await supabase
+        .from('portfolio_images')
+        .select('*')
+        .eq('folder_name', 'profile')
 
-      if (profile?.id) {
-        // Update existing record
-        const { error: updateError } = await supabase
-          .from('portfolio_images')
-          .update({
-            file_name: file.name,
-            storage_path: fileName,
-            full_url: publicUrl,
-            folder_name: 'profile',
-          })
-          .eq('id', profile.id)
+      // Insert new record
+      const { data: newRecord, error: insertError } = await supabase
+        .from('portfolio_images')
+        .insert({
+          file_name: file.name,
+          storage_path: fileName,
+          full_url: publicUrl,
+          folder_name: 'profile',
+          user_id: user.id
+        })
+        .select()
+        .single()
 
-        if (updateError) throw updateError
+      if (insertError) throw insertError
 
-        // Delete old file if exists
-        if (oldPath) {
-          await supabase.storage.from('portfolio-assets').remove([oldPath])
-        }
-      } else {
-        // Insert new record
-        const { error: insertError } = await supabase
-          .from('portfolio_images')
-          .insert({
-            file_name: file.name,
-            storage_path: fileName,
-            full_url: publicUrl,
-            folder_name: 'profile',
-            user_id: user.id
-          })
-
-        if (insertError) throw insertError
+      // Cleanup: Delete all OLD files and DB records
+      if (existingRecords && existingRecords.length > 0) {
+        const oldPaths = existingRecords.map(r => r.storage_path)
+        const oldIds = existingRecords.map(r => r.id)
+        
+        // Remove old files from storage
+        await supabase.storage.from('portfolio-assets').remove(oldPaths)
+        // Remove old records from DB
+        await supabase.from('portfolio_images').delete().in('id', oldIds)
       }
 
-      await fetchProfileImage()
+      setProfile(newRecord)
       if (onUpdate) onUpdate()
     } catch (error) {
       console.error('Error uploading profile image:', error.message)

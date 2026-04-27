@@ -67,12 +67,15 @@ export default function LocationManager() {
       const record = { ...formData, user_id: user.id, updated_at: new Date().toISOString() }
 
       if (location) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('locations')
           .update(record)
           .eq('id', location.id)
+          .select()
+          .single()
         
         if (error) throw error
+        setLocation(data)
       } else {
         const { data, error } = await supabase
           .from('locations')
